@@ -1,0 +1,54 @@
+sets
+*Завод
+Refinery /Omsk/
+*Нефтебазы
+NB /Domodedovo, Tomsk, Barnaul/
+*Транспорт, доступный для транспортировки
+Transport /Auto, Rail/
+*Все возможные продукты
+product /AI_92,AI_95,AI_98,TC,DTZ,DTA/
+
+;
+
+Parameters
+*Остатки на заводе в продуктовых резервуарах
+a(Refinery,product) capasity of refinery /Omsk.AI_92 = 2000, Omsk.AI_95 = 2000, Omsk.AI_98 = 2000, Omsk.TC = 2000, Omsk.DTZ = 2000, Omsk.DTA = 2000/
+*Заказ для НБ
+b(NB,product) zakaz /Domodedovo.AI_98 = 650, Domodedovo.AI_98 = 270, Domodedovo.TC = 950, Tomsk.AI_92 = 380, Tomsk.DTA = 750, Tomsk.DTZ = 980, Barnaul.AI_92 = 860, Barnaul.DTA = 750 /
+
+*Стоимость транспортировки 1 км на определенном виде транспорта, у.е.
+cost(Transport) /Auto = 44.5, Rail = 8/
+*Доступное кол-во транспорта, шт
+available (Transport) /Auto = 30, Rail = 20/
+*Объем резервуара в тоннах
+volume (Transport) /Auto = 20, Rail = 60/
+*Расстояние до НБ, км
+distance(Refinery,NB)/Omsk.Domodevo = 2790, Omsk.Tomsk = 898, Omsk.Barnaul = 875/
+*Какими способами можно поставить продукты на НБ:
+product2NB (NB,Transport) /Domodedovo.Auto = 1, Domodedovo.Rail = 1, Tomsk.Auto = 1, Barnaul.Rail = 1/ 
+
+;      
+
+Parameter c(Refinery,NB);
+    c(Refinery,NB) = cost(Transport)*d(Refinery,NB)
+    
+;
+
+Variables
+    z sum coast
+;
+
+Positive variable x(Refinery,NB) sum rezerv;
+
+equations
+    cost function
+    supply(Refinery) observe supply limit 
+    demand(NB) satisfy NB;
+
+cost.. z =e= sum((Refinery,NB), c(Refinery,NB)*x(Refinery,NB));
+supply.. sum(NB,x(Refinery,NB)) =1= a(Refinery);
+demand.. sum(Refinery,x(Refinery,NB)) =g= b(NB);
+
+Model transport /all/;
+solve transport using lp minimizing z;
+display x.l, x.m, c;
