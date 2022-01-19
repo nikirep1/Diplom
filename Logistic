@@ -1,0 +1,68 @@
+from openpyxl import Workbook
+import datetime
+import pulp as p
+import math
+import locale
+N = int(input('Количество нефтебаз заказчиков:'))
+T = int(input('Сколько доступно вагонов:'))
+Av = int(input('Сколько автотранспорта доступно:'))
+Auto = 0
+Train = 0
+
+for i in range(N):
+
+    T = T - Train
+    Av = Av - Auto
+
+    k = i + 1
+
+    a1 = float(input('Расстояние до НБ на авто:'))
+    a2 = float(input('Расстояние до НБ по ЖД:'))
+
+    y1 = 0
+    y2 = 0
+    if a1 >= 2500:
+        y1 = 2.7 + 40
+    elif 1300 <= a1 < 2500:
+        y1 = 2.5 + 40
+    elif a1 < 1300:
+        y1 = 3.5 + 40
+
+    if a2 >= 2500:
+        y2 = 1.8
+    elif 1300 <= a2 < 2500:
+        y2 = 2.5
+    elif a1 < 1300:
+        y2 = 3
+
+
+    problem = p.LpProblem('problem', p.LpMinimize)
+    auto = p.LpVariable('auto', lowBound=0)
+    train = p.LpVariable('train', lowBound=0)
+
+    problem += a1*y1*auto + a2*y2*train  # 'Функция цели'
+    Z = int(input('Суммарный закакз, т:'))
+
+    #Ограничения:
+    problem += 20*auto + 60*train >= Z  # '1'
+    problem += train <= T
+    problem += auto <= Av
+
+    print(k, '1', problem)
+    status = problem.solve()
+    print(k, '2', p.LpStatus[status])
+    Auto = p.value(auto)
+    Train = p.value(train)
+    Costs = p.value(problem.objective)
+    print('Необходимое кол-во автотранспорта:', math.ceil(Auto))
+    print('Необходимое кол-во ЖД транспорта:', math.ceil(Train))
+    print('Стоимость перевозки:', '{0:,}'.format(math.ceil(Costs)).replace(',', ' '), 'руб.', '\n')
+    # print(p.value(auto), p.value(train), p.value(problem.objective))
+
+    # print (k, 'Результат:')
+    # for variable in problem.variables():
+    #     print (variable.name, '=', round(variable.varValue,0))
+    # print ('Стоимость перевозки до НБ', k, ':', round(p.value(problem.objective),2), '\n')
+    # print (round(p.value(problem.objective),2), '\n')
+# необходимо в переменную передать результат работы программы,
+# а именно количество транспорта, чтобы каждый раз учитывать оставшийся транспорт, а не вводить в ручную
